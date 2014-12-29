@@ -317,4 +317,33 @@ describe "#import" do
       end
     end
   end
+
+  describe "importing when model has default_scope" do
+    it "doesn't import the default scope values" do
+      assert_difference "Widget.unscoped.count", +2 do
+        Widget.import [:w_id], [[1], [2]]
+      end
+      default_scope_value = Widget.scope_attributes[:active]
+      assert_not_equal default_scope_value, Widget.unscoped.find_by_w_id(1)
+      assert_not_equal default_scope_value, Widget.unscoped.find_by_w_id(2)
+    end
+
+    it "imports columns that are a part of the default scope using the value specified" do
+      assert_difference "Widget.unscoped.count", +2 do
+        Widget.import [:w_id, :active], [[1, true], [2, false]]
+      end
+      assert_not_equal true, Widget.unscoped.find_by_w_id(1)
+      assert_not_equal false, Widget.unscoped.find_by_w_id(2)
+    end
+  end
+
+  describe "importing serialized fields" do
+    it "imports values for serialized fields" do
+      assert_difference "Widget.unscoped.count", +1 do
+        Widget.import [:w_id, :data], [[1, {:a => :b}]]
+      end
+      assert_equal({:a => :b}, Widget.find_by_w_id(1).data)
+    end
+  end
+
 end
